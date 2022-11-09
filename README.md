@@ -26,25 +26,29 @@ aws dynamodb create-table \
   --provisioned-throughput \
       ReadCapacityUnits=10,WriteCapacityUnits=10 \
   --endpoint-url=http://localhost:8000
-# put item
+# put item (note: cleared if executed before repo's go program)
 aws dynamodb put-item \
   --table-name Movies \
   --item \
-'{"year": {"N": "1900"}, "title": {"S": "Example 1"}}' \
+'{"year": {"N": "1944"}, "title": {"S": "Captain America"}, "hasFavreau": {"BOOL": false}, "phase": {"S": "0"}}' \
   --endpoint-url=http://localhost:8000
-# query table
+# get item
+aws dynamodb get-item \
+  --table-name Movies \
+  --key '{"year": {"N": "1944"}, "title": {"S": "Captain America"}}' \
+  --endpoint-url=http://localhost:8000
+# range query
 aws dynamodb query \
   --table-name Movies \
   --key-condition-expression "#y = :yr" \
-  --projection-expression "title" \
+  --projection-expression "title,hasFavreau" \
   --expression-attribute-names '{"#y":"year"}' \
-  --expression-attribute-values '{":yr":{"N":"1985"}}' \
+  --expression-attribute-values '{":yr":{"N":"1944"}}' \
   --endpoint-url=http://localhost:8000
-# scan table
+# scan query
 aws dynamodb scan \
   --table-name Movies \
-  --filter-expression "title = :name" \
-  --expression-attribute-values '{":name":{"S":"Back to the Future"}}' \
-  --return-consumed-capacity 'TOTAL' \
+  --filter-expression "hasFavreau = :hasFav" \
+  --expression-attribute-values '{":hasFav": {"BOOL": false}}' \
   --endpoint-url=http://localhost:8000
 ```

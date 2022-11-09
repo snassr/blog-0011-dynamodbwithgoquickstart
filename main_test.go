@@ -107,13 +107,13 @@ func TestMain(t *testing.T) {
 	}
 
 	// -----------------------------
-	// query item by key
+	// get item
 	movieTitle := "Avengers: Endgame"
 	movieYear := 2019
 	titleAttr, _ := attributevalue.Marshal(movieTitle)
 	yearAttr, _ := attributevalue.Marshal(movieYear)
 
-	item, err := queryItemByKey(c, exampleTableName, DynoNotation{"title": titleAttr, "year": yearAttr})
+	item, err := getItem(c, exampleTableName, DynoNotation{"title": titleAttr, "year": yearAttr})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -127,7 +127,7 @@ func TestMain(t *testing.T) {
 	fmt.Printf("Search for movie title `%s` from `%d` returned %v\n\n", movieTitle, movieYear, movie)
 
 	// -----------------------------
-	// query items by key range
+	// range query
 	keyExpr := expression.Key("year").Equal(expression.Value(yearAttr))
 	expr, err := expression.NewBuilder().WithKeyCondition(keyExpr).Build()
 	if err != nil {
@@ -152,21 +152,21 @@ func TestMain(t *testing.T) {
 	fmt.Printf("Search for movies by `%v returned %v\n\n", movieYear, returnMovies)
 
 	// -----------------------------
-	// query items by attributes (not on key/index)
-	// usually this means you need a new secondary index!
-	// full scans are expensive and slow.
+	// scan query
+	// get items by attribute values (not by key/index)
+	// usually this means you need to create a secondary index!
+	// b/c full scans are expensive and slow.
 	hasFav := false
 	hasFavAttr, _ := attributevalue.Marshal(hasFav) // flip this to true or false
 
-	// ProjectionExpression is nil, so we receive all Item attributes in response
 	params := &dynamodb.ScanInput{
 		TableName:                aws.String("Movies"),
+		ProjectionExpression:     nil, // not provided, query will return all attributes
 		ExpressionAttributeNames: nil,
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":hasFav": hasFavAttr,
 		},
-		FilterExpression:     aws.String("hasFavreau = :hasFav"),
-		ProjectionExpression: nil,
+		FilterExpression: aws.String("hasFavreau = :hasFav"),
 	}
 	scan, err := c.Scan(context.TODO(), params)
 	if err != nil {
@@ -280,9 +280,9 @@ func putItems(c *dynamodb.Client, tableName string, items []DynoNotation) (err e
 	return nil
 }
 
-// queryItemByKey returns an item if found based on the key provided.
+// getItem returns an item if found based on the key provided.
 // the key could be either a primary or composite key and values map.
-func queryItemByKey(c *dynamodb.Client, tableName string, key DynoNotation) (item DynoNotation, err error) {
+func getItem(c *dynamodb.Client, tableName string, key DynoNotation) (item DynoNotation, err error) {
 	resp, err := c.GetItem(context.TODO(), &dynamodb.GetItemInput{Key: key, TableName: aws.String(tableName)})
 	if err != nil {
 		return nil, err

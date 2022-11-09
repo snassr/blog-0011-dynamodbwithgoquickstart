@@ -178,12 +178,13 @@ func TestMain(t *testing.T) {
 	}
 	fmt.Printf("Search for movies by `hasFavreau==%v` returned %v\n\n", hasFav, returnMovies)
 
+	fmt.Printf("completed.\n**********************\n\n")
 }
 
 // newclient constructs a new dynamodb client using a default configuration
 // and a provided profile name (created via aws configure cmd).
 func newclient(profile string) (*dynamodb.Client, error) {
-	defaultConfig, err := config.LoadDefaultConfig(context.TODO(),
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithRegion("localhost"),
 		config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
 			func(service, region string, options ...interface{}) (aws.Endpoint, error) {
@@ -191,8 +192,8 @@ func newclient(profile string) (*dynamodb.Client, error) {
 			})),
 		config.WithCredentialsProvider(credentials.StaticCredentialsProvider{
 			Value: aws.Credentials{
-				AccessKeyID: "dummy", SecretAccessKey: "dummy", SessionToken: "dummy",
-				Source: "Hard-coded credentials; values are irrelevant for local DynamoDB",
+				AccessKeyID: "abcd", SecretAccessKey: "a1b2c3", SessionToken: "",
+				Source: "Mock credentials used above for local instance",
 			},
 		}),
 	)
@@ -200,7 +201,7 @@ func newclient(profile string) (*dynamodb.Client, error) {
 		return nil, err
 	}
 
-	c := dynamodb.NewFromConfig(defaultConfig)
+	c := dynamodb.NewFromConfig(cfg)
 	return c, nil
 }
 
